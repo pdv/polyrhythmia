@@ -237,14 +237,18 @@ const toDegrees = (rads) => { return rads / 180 * Math.PI; };
 
 const SAMPLES_PER_LOOP = 10;
 
-const between = (angle, lower, upper) => {
-    return false;
+const between = (angle, start, end) => {
+    if (start > end) {
+        return start > angle && angle > end;
+    } else {
+        return angle < start || angle > end;
+    }
 };
 
 const scheduleSounds = () => {
     const startAngle = cursorAngle();
-    const wedgeAngle = 2 * Math.PI * (loopLength / SAMPLES_PER_LOOP);
-    const endAngle = startAngle - wedgeAngle;
+    const wedgeAngle = 2 * Math.PI / SAMPLES_PER_LOOP;
+    let endAngle = startAngle - wedgeAngle;
     if (endAngle < 0) {
         endAngle += 2 * Math.PI;
     }
@@ -308,7 +312,7 @@ const main = () => {
     window.addEventListener('resize', resize, false);
     loadSounds();
     resize();
-    window.setInterval(scheduleSounds, loopLength * SAMPLES_PER_LOOP * 1000);
+    window.setInterval(scheduleSounds, (loopLength / SAMPLES_PER_LOOP) * 1000);
     draw();
 };
 
