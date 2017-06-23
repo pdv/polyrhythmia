@@ -73,7 +73,7 @@ const pointOnCircle = (angle) => {
 const angleOfPoint = (point) => {
     const x = (point.x - circle.center.x) / circle.radius;
     const y = (point.y - circle.center.y) / circle.radius;
-    return Math.atan(y / x);
+    return Math.atan2(y, x);
 };
 
 const pointsOnCircle = (numSides) => {
@@ -193,7 +193,12 @@ const cursorPos = () => {
     return (elapsedTime - (elapsedLoops * loopLength)) / loopLength;
 };
 const cursorAngle = () => {
-    return cursorPos() * 2 * Math.PI - (Math.PI / 2);
+    let angle = -Math.PI / 2;
+    angle += (Math.PI * 2) * cursorPos();
+    if (angle < 0) {
+        angle += (Math.PI * 2);
+    }
+    return angle;
 };
 
 const drawCursor = () => {
@@ -252,12 +257,14 @@ const scheduleSounds = () => {
     if (endAngle < 0) {
         endAngle += 2 * Math.PI;
     }
+    console.log("start: ", startAngle, " end: ", endAngle);
     pointSet.forEach((point) => {
         const color = pointStatus(point).color;
         if (color == 0) { return; }
         const pointAngle = angleOfPoint(point);
+        console.log(pointAngle);
         if (between(pointAngle, startAngle, endAngle)) {
-            const fromNow = Math.abs(startAngle - pointAngle) * loopLength;
+            const fromNow = (Math.abs(startAngle - pointAngle) / (2 * Math.PI)) * loopLength;
             playSound(color, actx.currentTime + fromNow);
         }
     });
