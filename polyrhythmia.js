@@ -42,11 +42,39 @@ const drawCircle = () => {
     gctx.stroke();
 };
 
-const drawShape = (numSides) => {
+const pointOnCircle = (angle) => {
+    return {
+        x: (Math.cos(angle) * circle.radius) + circle.center.x,
+        y: (Math.sin(angle) * circle.radius) + circle.center.y
+    };
+};
+
+const drawShape = (numSides, color) => {
+    const startAngle = 3 * Math.PI / 2;
+    const startPoint = pointOnCircle(startAngle);
+    const dAngle = (2 * Math.PI) / numSides;
+
+    gctx.strokeStyle = color;
+    gctx.lineWidth = 5;
+    gctx.beginPath();
+    gctx.moveTo(startPoint.x, startPoint.y);
+
+    let angle = startAngle;
+    for (let i = 0; i < numSides; i++) {
+        angle += dAngle;
+        const point = pointOnCircle(angle);
+        gctx.lineTo(point.x, point.y);
+    }
+
+    gctx.stroke();
 };
 
 const draw = () => {
+    gctx.clearRect(0, 0, canvas.width, canvas.height);
     drawCircle();
+    for (let i = 3; i <= 8; i++) {
+        drawShape(i, 'green');
+    }
     window.requestAnimationFrame(draw);
 };
 
