@@ -70,6 +70,12 @@ const pointOnCircle = (angle) => {
     };
 };
 
+const angleOfPoint = (point) => {
+    const x = (point.x - circle.center.x) / circle.radius;
+    const y = (point.y - circle.center.y) / circle.radius;
+    return Math.atan(y / x);
+};
+
 const pointsOnCircle = (numSides) => {
     const dAngle = (2 * Math.PI) / numSides;
     let angle = 3 * Math.PI / 2;
@@ -155,7 +161,7 @@ const checkPoints = (e, insideCB, outsideCB) => {
 
 const mousedown = (e) => {
     checkPoints(e, (status) => {
-        status.color = status.color + 1 % COLORS.length;
+        status.color = (status.color + 1) % COLORS.length;
         return status;
     }, (status) => {
         return status;
@@ -187,7 +193,7 @@ const cursorPos = () => {
     return (elapsedTime - (elapsedLoops * loopLength)) / loopLength;
 };
 const cursorAngle = () => {
-    return cursorPos() * 2 * Math.PI;
+    return cursorPos() * 2 * Math.PI - (Math.PI / 2);
 };
 
 const drawCursor = () => {
@@ -222,9 +228,35 @@ const loadSound = (i, url) => {
 
 const playSound = (i, start) => {
     let src = actx.createBufferSource();
-    src.bufer = BUFFERS[i];
+    src.buffer = BUFFERS[i];
     src.connect(actx.destination);
-    src.start(start);
+    src.start(start, 0, 1);
+};
+
+const toDegrees = (rads) => { return rads / 180 * Math.PI; };
+
+const SAMPLES_PER_LOOP = 10;
+
+const between = (angle, lower, upper) => {
+    return false;
+};
+
+const scheduleSounds = () => {
+    const startAngle = cursorAngle();
+    const wedgeAngle = 2 * Math.PI * (loopLength / SAMPLES_PER_LOOP);
+    const endAngle = startAngle - wedgeAngle;
+    if (endAngle < 0) {
+        endAngle += 2 * Math.PI;
+    }
+    pointSet.forEach((point) => {
+        const color = pointStatus(point).color;
+        if (color == 0) { return; }
+        const pointAngle = angleOfPoint(point);
+        if (between(pointAngle, startAngle, endAngle)) {
+            const fromNow = Math.abs(startAngle - pointAngle) * loopLength;
+            playSound(color, actx.currentTime + fromNow);
+        }
+    });
 };
 
 
@@ -276,6 +308,7 @@ const main = () => {
     window.addEventListener('resize', resize, false);
     loadSounds();
     resize();
+    window.setInterval(scheduleSounds, loopLength * SAMPLES_PER_LOOP * 1000);
     draw();
 };
 
