@@ -25,9 +25,9 @@ const circle = {
 
 // Shapes / Points
 
-const pointSet = new Set();
-const points = {}; // [Point: { on: Bool, hover: Bool }]
-const shapes = []; // [[Point]]
+let pointSet = new Set();
+let points = {}; // [Point: { on: Bool, hover: Bool }]
+let shapes = []; // [[Point]]
 
 const pointString = (point) => {
     return "(" + point.x + "," + point.y + ")";
@@ -77,6 +77,9 @@ const addPoint = (point) => {
 };
 
 const loadShapes = () => {
+    shapes = [];
+    points = {};
+    pointSet = new Set();
     for (let numSides = 0; numSides <= 8; numSides++) {
         const shapePoints = pointsOnCircle(numSides);
         shapePoints.forEach(addPoint);
@@ -96,10 +99,12 @@ const resize = () => {
     gctx.canvas.height = height;
     circle.radius = (Math.min(width, height) / 2) * 0.9;
     circle.center = { x: width / 2, y: height / 2 };
+    loadShapes();
 
     console.log('width: ' + width + ', height: ' + height);
     console.log('radius: ' + circle.radius);
     console.log('center: {x: ' + circle.center.x + ', y: ' + circle.center.y + '}');
+    console.log(points);
 };
 
 
@@ -130,14 +135,9 @@ const checkPoints = (e, insideCB, outsideCB) => {
     });
 };
 
-
-const clip = (value, min, max) => {
-    return Math.max(min, Math.min(value, max));
-};
-
 const mousedown = (e) => {
     checkPoints(e, (status) => {
-        status.on = !status.on;
+        status.color = status.color + 1 % COLORS.length;
         return status;
     }, (status) => {
         return status;
@@ -185,15 +185,15 @@ const drawCursor = () => {
 // Drawing
 
 const drawCircle = () => {
-    gctx.strokeStyle = COLOR.red;
+    gctx.strokeStyle = 'black';
     gctx.lineWidth = 1;
     gctx.beginPath();
     gctx.arc(circle.center.x, circle.center.y, circle.radius, 0, 2 * Math.PI);
     gctx.stroke();
 };
 
-const drawShape = (shape, color) => {
-    gctx.strokeStyle = color;
+const drawShape = (shape) => {
+    gctx.strokeStyle = 'black';
     gctx.lineWidth = 1;
     gctx.beginPath();
     gctx.moveTo(shape[0].x, shape[0].y);
@@ -208,11 +208,11 @@ const drawPoint = (point) => {
     gctx.strokeStyle = color;
     gctx.beginPath();
     gctx.arc(point.x, point.y, CURSOR_RADIUS, 0, 2 * Math.PI);
-    if (status.on) {
+    if (status.color) {
         gctx.fillStyle = color;
         gctx.fill();
     } else if (status.hover) {
-        gctx.strokeStyle = color;
+        gctx.strokeStyle = 'black';
         gctx.stroke();
     }
 };
@@ -220,8 +220,8 @@ const drawPoint = (point) => {
 const draw = () => {
     gctx.clearRect(0, 0, canvas.width, canvas.height);
     drawCircle();
-    shapes.slice(2).forEach((shape) => { drawShape(shape, 'black'); });
-    pointSet.forEach((point) => { drawPoint(point, pointStatus(point), 'green'); });
+    shapes.slice(2).forEach(drawShape);
+    pointSet.forEach(drawPoint);
     drawCursor();
     window.requestAnimationFrame(draw);
 };
@@ -229,8 +229,6 @@ const draw = () => {
 const main = () => {
     window.addEventListener('resize', resize, false);
     resize();
-    loadShapes();
-    console.log(points);
     draw();
 };
 
