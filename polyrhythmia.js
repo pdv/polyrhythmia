@@ -13,9 +13,27 @@ const MAX_SIDES = 8;
 const CURSOR_RADIUS = 15;
 const COLORS = [
     '',
-    'blue',
+    'red',
+    'orange',
+    'yellow',
     'green',
-    'yellow'
+    'blue'
+];
+const SOUND_URLS = [
+    '',
+    'audio/red.wav',
+    'audio/orange.wav',
+    'audio/yellow.wav',
+    'audio/green.wav',
+    'audio/blue.wav',
+];
+const BUFFERS = [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
 ];
 
 const circle = {
@@ -23,7 +41,7 @@ const circle = {
     center: { x: 0, y: 0 }
 };
 
-// Shapes / Points
+// State
 
 let pointSet = new Set();
 let points = {}; // [Point: { on: Bool, hover: Bool }]
@@ -181,6 +199,34 @@ const drawCursor = () => {
     gctx.fill();
 };
 
+const loadSounds = () => {
+    for (let i = 1; i < SOUND_URLS.length; i++) {
+        loadSound(i, SOUND_URLS[i]);
+    }
+};
+
+const loadSound = (i, url) => {
+    const request = new XMLHttpRequest();
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+    request.onload = () => {
+        actx.decodeAudioData(
+            request.response, 
+            function(buffer) { BUFFERS[i] = buffer; },
+            () => { alert("error loading audio"); }
+        );
+    };
+    request.send();
+    console.log("Loading: " + url);
+};
+
+const playSound = (i, start) => {
+    let src = actx.createBufferSource();
+    src.bufer = BUFFERS[i];
+    src.connect(actx.destination);
+    src.start(start);
+};
+
 
 // Drawing
 
@@ -228,6 +274,7 @@ const draw = () => {
 
 const main = () => {
     window.addEventListener('resize', resize, false);
+    loadSounds();
     resize();
     draw();
 };
