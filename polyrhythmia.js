@@ -9,17 +9,41 @@ const $ = (id) => document.getElementById(id);
 
 // Global
 
-const colors = {
-    red: 'black'
-};
+const MAX_SIDES = 8;
+const CURSOR_RADIUS = 15;
+const COLORS = [
+    '',
+    'blue',
+    'green',
+    'yellow'
+];
 
 const circle = {
     radius: 0,
     center: { x: 0, y: 0 }
 };
 
-const points = {}; // [Point: Bool]
+// Shapes / Points
+
+const pointSet = new Set();
+const points = {}; // [Point: { on: Bool, hover: Bool }]
 const shapes = []; // [[Point]]
+
+const pointString = (point) => {
+    return "(" + point.x + "," + point.y + ")";
+};
+
+const pointStatus = (point) => {
+    return points[pointString(point)];
+};
+
+const setPointStatus = (point, status) => {
+    points[pointString(point)] = status;
+};
+
+const clearPointStatus = (point) => {
+    setPointStatus(point, { color: 0, hover: false });
+};
 
 const pointOnCircle = (angle) => {
     return {
@@ -39,10 +63,23 @@ const pointsOnCircle = (numSides) => {
     return points;
 };
 
+const addPoint = (point) => {
+    let alreadyAdded = false;
+    pointSet.forEach((pointInSet) => {
+        if (dist(pointInSet, point) < CURSOR_RADIUS) {
+            alreadyAdded = true;
+        }
+    });
+    if (!alreadyAdded) {
+        clearPointStatus(point);
+        pointSet.add(point);
+    }
+};
+
 const loadShapes = () => {
     for (let numSides = 0; numSides <= 8; numSides++) {
         const shapePoints = pointsOnCircle(numSides);
-        shapePoints.forEach((point) => { points[point] = false; });
+        shapePoints.forEach(addPoint);
         shapes[numSides] = shapePoints;
     }
 };
@@ -66,6 +103,61 @@ const resize = () => {
 };
 
 
+// Mouse
+
+const getMousePos = (canvas, event) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    return { x: x, y: y };
+};
+
+const dist = (a, b) => {
+    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+};
+
+const checkPoints = (e, insideCB, outsideCB) => {
+    const mousePos = getMousePos(canvas, e);
+    pointSet.forEach((point) => {
+        const before = pointStatus(point);
+        let after;
+        if (dist(point, mousePos) < CURSOR_RADIUS) {
+            after = insideCB(before);
+        } else {
+            after = outsideCB(before);
+        }
+        setPointStatus(point, after);
+    });
+};
+
+
+const clip = (value, min, max) => {
+    return Math.max(min, Math.min(value, max));
+};
+
+const mousedown = (e) => {
+    checkPoints(e, (status) => {
+        status.on = !status.on;
+        return status;
+    }, (status) => {
+        return status;
+    });
+};
+
+const mousemove = (e) => {
+    checkPoints(e, (status) => {
+        status.hover = true;
+        return status;
+    }, (status) => {
+        status.hover = false;
+        return status;
+    });
+};
+
+document.addEventListener('mousedown', mousedown, false);
+document.addEventListener('mousemove', mousemove, false);
+
+
 // Cursor
 
 const actx = new window.AudioContext();
@@ -85,7 +177,7 @@ const drawCursor = () => {
     gctx.beginPath();
     const angle = cursorAngle();
     const point = pointOnCircle(angle);
-    gctx.arc(point.x, point.y, 15, 0, 2 * Math.PI);
+    gctx.arc(point.x, point.y, CURSOR_RADIUS, 0, 2 * Math.PI);
     gctx.fill();
 };
 
@@ -93,7 +185,7 @@ const drawCursor = () => {
 // Drawing
 
 const drawCircle = () => {
-    gctx.strokeStyle = colors.red;
+    gctx.strokeStyle = COLOR.red;
     gctx.lineWidth = 1;
     gctx.beginPath();
     gctx.arc(circle.center.x, circle.center.y, circle.radius, 0, 2 * Math.PI);
@@ -110,10 +202,26 @@ const drawShape = (shape, color) => {
     gctx.stroke();
 };
 
+const drawPoint = (point) => {
+    const status = pointStatus(point);
+    const color = COLORS[status.color];
+    gctx.strokeStyle = color;
+    gctx.beginPath();
+    gctx.arc(point.x, point.y, CURSOR_RADIUS, 0, 2 * Math.PI);
+    if (status.on) {
+        gctx.fillStyle = color;
+        gctx.fill();
+    } else if (status.hover) {
+        gctx.strokeStyle = color;
+        gctx.stroke();
+    }
+};
+
 const draw = () => {
     gctx.clearRect(0, 0, canvas.width, canvas.height);
     drawCircle();
     shapes.slice(2).forEach((shape) => { drawShape(shape, 'black'); });
+    pointSet.forEach((point) => { drawPoint(point, pointStatus(point), 'green'); });
     drawCursor();
     window.requestAnimationFrame(draw);
 };
@@ -122,6 +230,7 @@ const main = () => {
     window.addEventListener('resize', resize, false);
     resize();
     loadShapes();
+    console.log(points);
     draw();
 };
 
