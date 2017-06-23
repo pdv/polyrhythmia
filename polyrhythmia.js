@@ -8,7 +8,7 @@
 const $ = (id) => document.getElementById(id);
 
 const colors = {
-    red: 'red'
+    red: 'black'
 };
 
 const circle = {
@@ -36,7 +36,7 @@ const actx = new window.AudioContext();
 
 const drawCircle = () => {
     gctx.strokeStyle = colors.red;
-    gctx.lineWidth = 5;
+    gctx.lineWidth = 1;
     gctx.beginPath();
     gctx.arc(circle.center.x, circle.center.y, circle.radius, 0, 2 * Math.PI);
     gctx.stroke();
@@ -49,31 +49,33 @@ const pointOnCircle = (angle) => {
     };
 };
 
-const drawShape = (numSides, color) => {
-    const startAngle = 3 * Math.PI / 2;
-    const startPoint = pointOnCircle(startAngle);
+const pointsOnCircle = (numSides) => {
     const dAngle = (2 * Math.PI) / numSides;
-
-    gctx.strokeStyle = color;
-    gctx.lineWidth = 5;
-    gctx.beginPath();
-    gctx.moveTo(startPoint.x, startPoint.y);
-
-    let angle = startAngle;
+    let angle = 3 * Math.PI / 2;
+    let points = [];
     for (let i = 0; i < numSides; i++) {
+        points.push(pointOnCircle(angle));
         angle += dAngle;
-        const point = pointOnCircle(angle);
-        gctx.lineTo(point.x, point.y);
     }
+    return points;
+};
 
+const drawShape = (numSides, color) => {
+    gctx.strokeStyle = color;
+    gctx.lineWidth = 1;
+    gctx.beginPath();
+    const points = pointsOnCircle(numSides);
+    gctx.moveTo(points[0].x, points[0].y);
+    points.forEach((point) => { gctx.lineTo(point.x, point.y); });
+    gctx.lineTo(points[0].x, points[0].y);
     gctx.stroke();
 };
 
 const draw = () => {
     gctx.clearRect(0, 0, canvas.width, canvas.height);
     drawCircle();
-    for (let i = 3; i <= 8; i++) {
-        drawShape(i, 'green');
+    for (let i = 2; i <= 8; i++) {
+        drawShape(i, 'black');
     }
     window.requestAnimationFrame(draw);
 };
