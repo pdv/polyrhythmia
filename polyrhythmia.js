@@ -240,7 +240,7 @@ const playSound = (i, start) => {
 
 const toDegrees = (rads) => { return rads / 180 * Math.PI; };
 
-const SAMPLES_PER_LOOP = 10;
+const SAMPLES_PER_LOOP = 20;
 
 const between = (angle, start, end) => {
     if (start > end) {
@@ -257,12 +257,13 @@ const scheduleSounds = () => {
     if (endAngle < 0) {
         endAngle += 2 * Math.PI;
     }
-    console.log("start: ", startAngle, " end: ", endAngle);
     pointSet.forEach((point) => {
         const color = pointStatus(point).color;
         if (color == 0) { return; }
-        const pointAngle = angleOfPoint(point);
-        console.log(pointAngle);
+        let pointAngle = angleOfPoint(point);
+        if (pointAngle < 0) {
+            pointAngle += 2 * Math.PI;
+        }
         if (between(pointAngle, startAngle, endAngle)) {
             const fromNow = (Math.abs(startAngle - pointAngle) / (2 * Math.PI)) * loopLength;
             playSound(color, actx.currentTime + fromNow);
