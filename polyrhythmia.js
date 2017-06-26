@@ -11,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 
 const MAX_SIDES = 8;
 const CURSOR_RADIUS = 15;
+const SAMPLES_PER_LOOP = 50;
 const COLORS = [
     '',
     'red',
@@ -40,6 +41,16 @@ const circle = {
     radius: 0,
     center: { x: 0, y: 0 }
 };
+
+
+let audioInterval;
+let loopLength = 2; // secs
+$('tempo').addEventListener('input', (e) => {
+    loopLength = (60 / $('tempo').value) * 4;
+    window.clearInterval(audioInterval);
+    audioInterval = window.setInterval(scheduleSounds, (loopLength / SAMPLES_PER_LOOP) * 1000);
+});
+
 
 // State
 
@@ -185,7 +196,6 @@ document.addEventListener('mousemove', mousemove, false);
 // Cursor
 
 const actx = new window.AudioContext();
-const loopLength = 2; // secs
 const startTime = actx.currentTime;
 const cursorPos = () => {
     let elapsedTime = actx.currentTime - startTime;
@@ -240,7 +250,6 @@ const playSound = (i, start) => {
 
 const toDegrees = (rads) => { return rads / 180 * Math.PI; };
 
-const SAMPLES_PER_LOOP = 20;
 
 const between = (angle, start, end) => {
     if (start > end) {
@@ -320,7 +329,7 @@ const main = () => {
     window.addEventListener('resize', resize, false);
     loadSounds();
     resize();
-    window.setInterval(scheduleSounds, (loopLength / SAMPLES_PER_LOOP) * 1000);
+    audioInterval = window.setInterval(scheduleSounds, (loopLength / SAMPLES_PER_LOOP) * 1000);
     draw();
 };
 
